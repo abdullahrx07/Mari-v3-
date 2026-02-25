@@ -3,7 +3,7 @@ const fs = require('fs');
 
 const baseApiUrl = async () => {
   const base = await axios.get("https://raw.githubusercontent.com/abdullahrx07/X-api/main/MaRiA/baseApiUrl.json");
-  return base.data.api;
+  return base.data.song;
 };
 
 module.exports = {
