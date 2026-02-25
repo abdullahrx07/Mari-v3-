@@ -3,7 +3,7 @@ const fs = require("fs");
 
 const baseApiUrl = async () => {
   const base = await axios.get(
-    `https://raw.githubusercontent.com/rummmmna21/rx-api/main/baseApiUrl.json`
+    `https://raw.githubusercontent.com/abdullahrx07/X-api/main/MaRiA/baseApiUrl.json`
   );
   return base.data.api;
 };
@@ -11,7 +11,7 @@ const baseApiUrl = async () => {
 module.exports.config = {
   name: "song",
   version: "2.3.0",
-  aliases: ["music", "play"],
+  aliases: ["music", "sing"],
   credits: "𝐫𝐗", //special thanks to dipto ===api from dipto===
   countDown: 5,
   hasPermssion: 0,
