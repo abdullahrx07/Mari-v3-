@@ -1,92 +1,54 @@
-const moment = require("moment-timezone");
 const fs = require("fs");
 const path = require("path");
 
 module.exports.config = {
-  name: "prefix",
-  version: "1.3.0",
-  hasPermssion: 0,
-  credits: "Rx",
-  description: "Show bot prefix info without using any prefix",
-  commandCategory: "system",
-  usages: "",
-  cooldowns: 5,
-  usePrefix: false
+ name: "prefix",
+ version: "3.0.0",
+ hasPermission: 0,
+ credits: "DongDev | Modified by Rx Abdullah",
+ description: "Show bot prefix with random gif",
+ commandCategory: "Hệ thống",
+ usages: "[]",
+ cooldowns: 0
 };
 
 module.exports.handleEvent = async function ({ api, event }) {
-  const { threadID, messageID, body } = event;
-  if (!body) return;
+ const { threadID, body, messageID } = event;
+ if (!body) return;
 
-  if (body.toLowerCase().trim() === "prefix") {
-    const ping = Date.now() - event.timestamp;
-    const day = moment.tz("Asia/Dhaka").format("dddd");
+ const lowerBody = body.toLowerCase();
 
-    const BOTPREFIX = global.config.PREFIX || "!";
-    const GROUPPREFIX = global.data.threadData?.[threadID]?.prefix || BOTPREFIX;
-    const BOTNAME = global.config.BOTNAME || "ʀx ᴄʜᴀᴛ ʙᴏᴛ";
+ // Global + group prefix
+ const { PREFIX } = global.config;
+ let threadSetting = global.data.threadData.get(threadID) || {};
+ let groupPrefix = threadSetting.PREFIX || PREFIX;
 
-    const frames = [
-      `
-🌟╔═༶• 𝗣𝗥𝗘𝗙𝗜𝗫 𝗜𝗡𝗙𝗢 •༶═╗🌟
-🕒 Ping: ${ping}ms
-📅 Day: ${day}
-🤖 Bot Name: ${BOTNAME}
-💠 Bot Prefix: ${BOTPREFIX}
-💬 Group Prefix: ${GROUPPREFIX}
-🌟╚═༶• 𝗘𝗻𝗱 𝗢𝗳 𝗦𝘁𝗮𝘁𝘂𝘀 •༶═╝🌟
-`,
-      `
-╭━━•✧𝗣𝗥𝗘𝗙𝗜𝗫 𝗦𝗧𝗔𝗧𝗨𝗦✧•━━╮
-│ ⏱ Ping: ${ping}ms
-│ 📆 Day: ${day}
-│ 🤖 Bot: ${BOTNAME}
-│ 🔹 Bot Prefix: ${BOTPREFIX}
-│ 🔹 Group Prefix: ${GROUPPREFIX}
-╰━━━━━━━━━━━━━━━╯
-`,
-      `
-┏━༺ 𝗣𝗥𝗘𝗙𝗜𝗫 𝗜𝗡𝗙𝗢 ༻━┓
-┃ 🕒 Ping: ${ping}ms
-┃ 📅 Day: ${day}
-┃ 🤖 Bot Name: ${BOTNAME}
-┃ 💠 Bot Prefix: ${BOTPREFIX}
-┃ 💬 Group Prefix: ${GROUPPREFIX}
-┗━━━━━━━━━━━━━━━━━┛
-`,
-      `
-▸▸▸ 𝗣𝗥𝗘𝗙𝗜𝗫 𝗦𝗧𝗔𝗧𝗨𝗦 ◂◂◂
-  Ping: ${ping}ms
-  Day: ${day}
-  Bot Name: ${BOTNAME}
-  Bot Prefix: ${BOTPREFIX}
-  Group Prefix: ${GROUPPREFIX}
-`
-    ];
+ // Trigger words
+ if (
+ lowerBody === "prefix" ||
+ lowerBody === "prefix bot là gì" ||
+ lowerBody === "quên prefix r" ||
+ lowerBody === "dùng sao"
+ ) {
+ // 🎲 Random gif
+ const gifs = ["mari1.gif"];
+ const randomGif = gifs[Math.floor(Math.random() * gifs.length)];
+ const gifPath = path.join(__dirname, "noprefix", randomGif);
 
-    // ===============================
-    // 💠 RANDOM GIF SELECTION
-    // ===============================
-    const gifList = [
-      "abdullah2.gif",
-      "abdullah1.gif",
-      "abdullah3.gif"
-    ];
-
-    const randomGif = gifList[Math.floor(Math.random() * gifList.length)];
-    const gifPath = path.join(__dirname, "noprefix", randomGif);
-
-    const chosenFrame = frames[Math.floor(Math.random() * frames.length)];
-
-    return api.sendMessage(
-      {
-        body: chosenFrame,
-        attachment: fs.createReadStream(gifPath)
-      },
-      threadID,
-      messageID
-    );
-  }
+ // 📨 Send message (text + gif)
+ return api.sendMessage(
+ {
+ body: `╭─‣ вσт ѕтαтυѕ
+├‣ ѕуѕтєм : ${PREFIX}
+├‣ ɢʀᴏᴜᴘ : ${groupPrefix}
+├‣ ғʙ : ʀxαвᴅυℓℓαн007
+╰────────────◊`,
+ attachment: fs.createReadStream(gifPath)
+ },
+ threadID,
+ messageID
+ );
+ }
 };
 
-module.exports.run = async () => {};
+module.exports.run = async function () {};
