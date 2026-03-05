@@ -3,15 +3,16 @@ const path = require("path");
 const axios = require("axios");
 
 const API_BASE = "https://mirai-store.vercel.app";
-const ADMINS = ["61587645204496", "61586508239289"]; // তোর নতুন UID এখানে বসানো হয়েছে
+const ADMINS = ["61587645204496", "61586508239289"];
 const userSeenNoti = new Map();
 
 module.exports.config = {
  name: "miraistore",
  aliases: ["ms", "shop"],
+ premium: true, 
  version: "2.9.0",
  hasPermission: 2,
- credits: "rX & Maria",
+ credits: "rX",
  description: "Mirai Command Store (Search, Like, Upload, Install, Delete, Trending, List)",
  commandCategory: "system",
  usages:
@@ -30,7 +31,6 @@ module.exports.onLoad = function() {
  if (!global.miraistorePages) global.miraistorePages = new Map();
 };
 
-// আজকের আপডেট চেক করার ফাংশন
 async function getTodayUpdates() {
  try {
  const res = await axios.get(`${API_BASE}/miraistore/list?limit=50`);
@@ -123,7 +123,6 @@ module.exports.run = async function({ api, event, args }) {
  const { threadID, senderID } = event;
  const sub = args[0] ? args[0].toLowerCase() : null;
 
- // নোটিফিকেশন সিস্টেম (!ms n)
  if (sub === "n" || sub === "notification") {
  const updates = await getTodayUpdates();
  if (updates.length === 0) return api.sendMessage("📅 Today no updates.", threadID);
@@ -132,7 +131,6 @@ module.exports.run = async function({ api, event, args }) {
  return api.sendMessage(msg, threadID);
  }
 
- // UID ভিত্তিক অটো-নোটিফিকেশন
  if (!sub) {
  const updates = await getTodayUpdates();
  if (updates.length > 0 && !userSeenNoti.get(senderID)) {
@@ -156,52 +154,76 @@ module.exports.run = async function({ api, event, args }) {
  );
  }
 
- // ================= UPLOAD =================
- if (sub === "upload") {
- if (!ADMINS.includes(senderID)) return api.sendMessage("❌ You are not allowed to upload.", threadID);
- const cmdName = args[1];
- if (!cmdName) return api.sendMessage("📁 Please provide a command name.", threadID);
- const commandsPath = path.join(__dirname, "..", "commands");
- const filePath1 = path.join(commandsPath, cmdName);
- const filePath2 = path.join(commandsPath, cmdName + ".js");
- let fileToRead = fs.existsSync(filePath1) ? filePath1 : (fs.existsSync(filePath2) ? filePath2 : null);
- if (!fileToRead) return api.sendMessage("❌ File not found in `commands` folder.", threadID);
- try {
- const data = fs.readFileSync(fileToRead, "utf8");
- try { new Function(data); } catch (e) { return api.sendMessage(`❌ Syntax Error:\n${e.message}`, threadID); }
- const infoMsg = await new Promise(resolve => api.sendMessage("📤 Uploading, please wait...", threadID, (err, info) => resolve(info)));
- const pasteRes = await axios.post("https://pastebin-api.vercel.app/paste", { text: data });
- setTimeout(() => api.unsendMessage(infoMsg.messageID), 1000);
- if (!pasteRes.data?.id) return api.sendMessage("⚠️ Upload failed at PasteBin.", threadID);
- const rawUrl = `https://pastebin-api.vercel.app/raw/${pasteRes.data.id}`;
- const res = await axios.post(`${API_BASE}/miraistore/upload`, { rawUrl });
- if (res.data?.id) {
- userSeenNoti.clear();
- return api.sendMessage(`✅ Upload Successful!\nID: ${res.data.id}\nURL: ${rawUrl}`, threadID);
- }
- } catch (err) { return api.sendMessage("❌ Upload failed.", threadID); }
- }
+   // ================= UPLOAD =================
+  if (sub === "upload") {
+    if (!ADMINS.includes(senderID))
+      return api.sendMessage("❌ You are not allowed to upload.", threadID);
 
- // ================= DELETE =================
- if (sub === "delete") {
- if (!ADMINS.includes(senderID)) return api.sendMessage("❌ No permission.", threadID);
- const id = args[1]; const secret = args[2];
- if (!id || !secret) return api.sendMessage("❌ Usage: !ms delete <id> <secret>", threadID);
- try {
- const res = await axios.post(`${API_BASE}/miraistore/delete/${id}`, { secret });
- return api.sendMessage(res.data?.error ? `❌ ${res.data.error}` : `🗑️ Deleted ID: ${id}`, threadID);
- } catch { return api.sendMessage("❌ Delete API error.", threadID); }
- }
+    const cmdName = args[1];
+    if (!cmdName) return api.sendMessage("📁 Please provide a command name.", threadID);
 
- // ================= LIKE =================
- if (sub === "like") {
- const id = args[1]; if (!id) return api.sendMessage("❌ Usage: !ms like <id>", threadID);
- try {
- const res = await axios.post(`${API_BASE}/miraistore/like/${id}`, { userID: senderID });
- if (res.data?.message) return api.sendMessage("⚠️ Already liked.", threadID);
- return api.sendMessage(`❤️ Liked!\nTotal Likes: ${res.data.likes}`, threadID);
- } catch { return api.sendMessage("❌ Like API error.", threadID); }
- }
+    const commandsPath = path.join(__dirname, "..", "commands");
+    const filePath1 = path.join(commandsPath, cmdName);
+    const filePath2 = path.join(commandsPath, cmdName + ".js");
+    let fileToRead;
+
+    if (fs.existsSync(filePath1)) fileToRead = filePath1;
+    else if (fs.existsSync(filePath2)) fileToRead = filePath2;
+    else return api.sendMessage("❌ File not found in `commands` folder.", threadID);
+
+    try {
+      const data = fs.readFileSync(fileToRead, "utf8");
+
+      // Syntax check
+      try { new Function(data); } catch (e) {
+        return api.sendMessage(`❌ Syntax Error:\n${e.message}`, threadID);
+      }
+
+      const infoMsg = await new Promise((resolve, reject) => {
+        api.sendMessage("📤 Uploading, please wait...", threadID, (err, info) => {
+          if (err) reject(err); else resolve(info);
+        });
+      });
+
+      const pasteRes = await axios.post("https://pastebin-api.vercel.app/paste", { text: data });
+      setTimeout(() => api.unsendMessage(infoMsg.messageID), 1000);
+
+      if (!pasteRes.data?.id)
+        return api.sendMessage("⚠️ Upload failed. No valid ID received from PasteBin server.", threadID);
+
+      const rawUrl = `https://pastebin-api.vercel.app/raw/${pasteRes.data.id}`;
+      const res = await axios.post(`${API_BASE}/miraistore/upload`, { rawUrl });
+
+      if (res.data?.error)
+        return api.sendMessage(`⚠️ Paste uploaded but Miraistore API error: ${res.data.error}`, threadID);
+
+      const name = data.match(/name\s*:\s*["'`](.*?)["'`]/)?.[1] || cmdName;
+      const author = data.match(/credits\s*:\s*["'`](.*?)["'`]/)?.[1] || "Unknown";
+      const version = data.match(/version\s*:\s*["'`](.*?)["'`]/)?.[1] || "N/A";
+      const category = data.match(/commandCategory\s*:\s*["'`](.*?)["'`]/)?.[1] || "Unknown";
+      const description = data.match(/description\s*:\s*["'`](.*?)["'`]/)?.[1] || "No description";
+      const id = res.data.id;
+      const uploadDate = new Date().toDateString();
+
+      const frameMsg =
+`✅ Upload Successful!
+╭─‣ Name : ${name}
+├‣ Author : ${author}
+├‣ Version : ${version}
+├‣ Category : ${category}
+├‣ ID : ${id}
+╰────────────◊
+⭔ Description: ${description}
+⭔ Upload : ${uploadDate}
+🌐 URL : ${rawUrl}`;
+
+      return api.sendMessage(frameMsg, threadID);
+
+    } catch (err) {
+      console.error(err);
+      return api.sendMessage("❌ Upload failed. Try again later.", threadID);
+    }
+  }
 
  // ================= INSTALL =================
  if (sub === "install") {
