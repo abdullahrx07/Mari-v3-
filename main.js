@@ -506,18 +506,7 @@ loginApiData.setOptions(global.config.FCAOption)
           }
       }
   }()
-console.log(co(`
-███╗   ███╗██╗██████╗  █████╗ ██╗    ██╗    ██╗   ██╗██████╗ 
-████╗ ████║██║██╔══██╗██╔══██╗██║    ██║    ██║   ██║╚════██╗
-██╔████╔██║██║██████╔╝███████║██║ █╗ ██║    ██║   ██║ █████╔╝
-██║╚██╔╝██║██║██╔══██╗██╔══██║██║███╗██║    ╚██╗ ██╔╝ ╚═══██╗
-██║ ╚═╝ ██║██║██║  ██║██║  ██║╚███╔███╔╝     ╚████╔╝ ██████╔╝
-╚═╝     ╚═╝╚═╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚══╝╚══╝       ╚═══╝  ╚═════╝ 
 
-        🔥 MIRAI V3 BOT STARTED SUCCESSFULLY 🔥
-        ⚡ OWNER: rX Abdullah
-        🚀 SYSTEM READY TO USE
-`));
   console.log(chalk.bold(co(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`)));
         logger.loader(`Commands Loaded: ${global.client.commands.size}`)
         logger.loader(`Events Loaded: ${global.client.events.size}`)
